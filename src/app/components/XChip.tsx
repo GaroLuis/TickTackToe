@@ -2,6 +2,8 @@
 
 import { GroupProps } from '@react-three/fiber';
 
+export type XChipTag= 'X'
+
 export default function XChip(props: GroupProps) {
   return (
     <group {...props} rotation={[0, 0, Math.PI / 4]}>

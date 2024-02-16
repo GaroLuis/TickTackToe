@@ -1,6 +1,8 @@
 'use client'
 
-import { GroupProps, MeshProps } from '@react-three/fiber';
+import { MeshProps } from '@react-three/fiber';
+
+export type OChipTag= 'O'
 
 export default function OChip(props: MeshProps) {
   return (

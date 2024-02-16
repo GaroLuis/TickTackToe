@@ -2,25 +2,40 @@
 
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import XChip from '@/app/components/XChip';
-import OChip from '@/app/components/OChip';
 import Board from '@/app/components/Board';
+import { useState } from 'react';
+import { OChipTag } from '@/app/components/OChip';
+import { XChipTag } from '@/app/components/XChip';
 
 export default function Home() {
+  const [state, setState] = useState<{
+    board: (OChipTag | XChipTag | null)[],
+    turn: OChipTag | XChipTag,
+  }>({
+    board: [
+      null, null, null,
+      null, null, null,
+      null, null, null,
+    ],
+    turn: 'X',
+  })
+
   return (
     <main className="w-[100vw] h-[100vh]">
       <Canvas className={'bg-white'}>
-        <Board />
-        <XChip position={[-2.5, 2.5, 0]} />
-        <XChip position={[0, 2.5, 0]}/>
-        <XChip position={[2.5, 2.5, 0]}/>
-        <OChip position={[-2.5, 0, 0]} />
-        <OChip position={[0, 0, 0]}/>
-        <OChip position={[2.5, 0, 0]}/>
-        <XChip position={[-2.5, -2.5, 0]} />
-        <XChip position={[0, -2.5, 0]}/>
-        <XChip position={[2.5, -2.5, 0]}/>
-        <OrbitControls />
+        <Board
+          chips={state.board}
+          playChip={(index) => {
+            const board = [...state.board]
+            board[index] = state.turn
+
+            setState(prevState => ({
+              board: board,
+              turn: prevState.turn === 'X' ? 'O' : 'X',
+            }))
+          }}
+        />
+        <OrbitControls/>
       </Canvas>
     </main>
   );

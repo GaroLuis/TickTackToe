@@ -1,3 +1,7 @@
+![image](https://github.com/GaroLuis/TickTackToe/assets/47337585/65ee5301-287f-48d0-95a6-d26782664bea)
+
+
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

@@ -1,18 +1,25 @@
 'use client'
 
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Text3D } from '@react-three/drei';
-import Board from '@/app/components/Board';
-import { useState } from 'react';
-import { OChipTag } from '@/app/components/OChip';
-import { XChipTag } from '@/app/components/XChip';
-import roboto from '../assets/roboto_font.json'
+import { useEffect, useState } from 'react';
+import Game, { EndState, GameState } from '@/app/components/Game';
+
+let ws: WebSocket;
+if (typeof window !== "undefined") {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+  ws = new WebSocket(`${protocol}//localhost:3001/api/ws`);
+  setInterval(() => {
+    if (ws.readyState !== ws.OPEN) {
+      ws = new WebSocket(`${protocol}//localhost:3001/api/ws`);
+      return;
+    }
+
+    ws.send(`{"event":"ping"}`);
+  }, 29000);
+}
 
 export default function Home() {
-  const [state, setState] = useState<{
-    board: (OChipTag | XChipTag | null)[],
-    turn: OChipTag | XChipTag,
-  }>({
+  const [state, setState] = useState<GameState>({
     board: [
       null, null, null,
       null, null, null,
@@ -21,80 +28,43 @@ export default function Home() {
     turn: 'X',
   })
 
-  const [endState, setEndState] = useState<{
-    won: OChipTag | XChipTag | null,
-    end: boolean,
-  }>({
+  const [endState, setEndState] = useState<EndState>({
     won: null,
     end: false,
   })
 
-  function checkWin(board: (OChipTag | XChipTag | null)[], chip: OChipTag | XChipTag) {
-    if (
-      (board[0] === chip && board[1] === chip && board[2] === chip) ||
-      (board[3] === chip && board[4] === chip && board[5] === chip) ||
-      (board[6] === chip && board[7] === chip && board[8] === chip) ||
-      (board[0] === chip && board[3] === chip && board[6] === chip) ||
-      (board[1] === chip && board[4] === chip && board[7] === chip) ||
-      (board[2] === chip && board[5] === chip && board[8] === chip) ||
-      (board[0] === chip && board[4] === chip && board[8] === chip) ||
-      (board[2] === chip && board[4] === chip && board[6] === chip)
-    ) {
-      setEndState({
-        won: state.turn,
-        end: true,
-      })
-      return
+  useEffect(() => {
+    const onMessage = (msg: MessageEvent) => {
+      try {
+        const event = JSON.parse(msg.data) as { event: string; detail: any };
+
+        if (event.event === "gameStateR") {
+          setState(() => {
+            return event.detail;
+          });
+        }
+      } catch (e) {
+        // do nothing
+      }
+    };
+
+    try {
+      ws.addEventListener("message", onMessage);
+    } catch (err) {
+      // do nothing
     }
 
-    if (!state.board.some((chip) => chip === null)) {
-      setEndState({
-        won: null,
-        end: true,
-      })
-    }
-  }
+    return () => {
+      ws.removeEventListener("message", onMessage);
+    };
+  }, []);
 
   return (
-    <main className="w-[100vw] h-[100vh]">
-      <Canvas
-        camera={{
-          position: [0, 0, 10]
-        }}
-      >
-        {endState.won && (
-          <Text3D font={roboto as unknown as string} position={[0, 0, 2]}>
-            {endState.won} WON!
-            <meshBasicMaterial color={'yellow'}/>
-          </Text3D>
-        )}
-        {endState.end && !endState.won && (
-          <Text3D font={roboto as unknown as string} position={[0, 0, 2]}>
-            DRAW!
-            <meshBasicMaterial color={'orange'}/>
-          </Text3D>
-        )}
-        <Board
-          chips={state.board}
-          playChip={(index) => {
-            if (endState.end) {
-              return;
-            }
-
-            const board = [...state.board]
-            board[index] = state.turn
-            const chip = state.turn;
-
-            setState(({
-              board: board,
-              turn: chip === 'X' ? 'O' : 'X',
-            }))
-
-            checkWin(board, chip)
-          }}
-        />
-        <OrbitControls/>
-      </Canvas>
-    </main>
+    <Game
+      gameState={state}
+      setGameState={(gameState: GameState) => ws.send(JSON.stringify({event: "gameStateS", "detail": gameState}))}
+      endState={endState}
+      setEndState={setEndState}
+    />
   );
 }

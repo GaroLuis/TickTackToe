@@ -31,15 +31,15 @@ export default function Board({chips, playChip}: {
       </mesh>
       {chips.map((chip, index) => {
         if (chip === 'O') {
-          return (<OChip position={getPosition(index)}/>)
+          return (<OChip position={getPosition(index)} key={Math.random()}/>)
         }
 
         if (chip === 'X') {
-          return (<XChip position={getPosition(index)}/>)
+          return (<XChip position={getPosition(index)} key={Math.random()}/>)
         }
 
         return (
-          <mesh position={getPosition(index)} visible={false} onClick={() => playChip(index)}>
+          <mesh position={getPosition(index)} visible={false} onClick={() => playChip(index)} key={Math.random()}>
             <boxGeometry args={[2, 2, 0.5]}/>
           </mesh>
         )

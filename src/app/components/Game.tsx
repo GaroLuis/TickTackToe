@@ -5,33 +5,7 @@ import { OChipTag } from '@/app/components/OChip';
 import { XChipTag } from '@/app/components/XChip';
 import roboto from '../../assets/roboto_font.json'
 
-export default function Game({gameState, setGameState, endState, setEndState}: Props) {
-  function checkWin(board: (OChipTag | XChipTag | null)[], chip: OChipTag | XChipTag) {
-    if (
-      (board[0] === chip && board[1] === chip && board[2] === chip) ||
-      (board[3] === chip && board[4] === chip && board[5] === chip) ||
-      (board[6] === chip && board[7] === chip && board[8] === chip) ||
-      (board[0] === chip && board[3] === chip && board[6] === chip) ||
-      (board[1] === chip && board[4] === chip && board[7] === chip) ||
-      (board[2] === chip && board[5] === chip && board[8] === chip) ||
-      (board[0] === chip && board[4] === chip && board[8] === chip) ||
-      (board[2] === chip && board[4] === chip && board[6] === chip)
-    ) {
-      setEndState({
-        won: gameState.turn,
-        end: true,
-      })
-      return
-    }
-
-    if (!gameState.board.some((chip) => chip === null)) {
-      setEndState({
-        won: null,
-        end: true,
-      })
-    }
-  }
-
+export default function Game({gameState, setGameState, endState}: Props) {
   return (
     <main className="w-[100vw] h-[100vh]">
       <Canvas
@@ -66,8 +40,6 @@ export default function Game({gameState, setGameState, endState, setEndState}: P
               board: board,
               turn: chip === 'X' ? 'O' : 'X',
             }))
-
-            checkWin(board, chip)
           }}
         />
         <OrbitControls/>

@@ -38,10 +38,12 @@ export default function Home() {
       try {
         const event = JSON.parse(msg.data) as { event: string; detail: any };
 
-        if (event.event === "gameStateR") {
-          setState(() => {
-            return event.detail;
-          });
+        switch (event.event) {
+          case "gameStateR":
+            setState(event.detail);
+            break;
+          case "endStateR":
+            setEndState(event.detail)
         }
       } catch (e) {
         // do nothing

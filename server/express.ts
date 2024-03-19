@@ -10,6 +10,7 @@ import next from "next";
  * requests as they come in.
  */
 import * as Websocket from "../src/server/websocket";
+import { WebSocketServer } from 'ws';
 
 /**
  * Wrap the main entrypoint in an async function so we can use async/await

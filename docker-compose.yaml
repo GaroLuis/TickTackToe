@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+    app:
+        build: .
+        hostname: 'tick-tack-toe'
+        volumes:
+            - '.:/var/www/tick-tack-toe'
+        ports:
+            - '3000:3000'
+            - '3001:3001'

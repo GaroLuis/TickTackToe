@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Game, { EndState, GameState } from '@/app/components/Game';
 
 let ws: WebSocket;
-if (typeof window !== "undefined") {
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+if (typeof window !== 'undefined') {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
   ws = new WebSocket(`${protocol}//localhost:3001/api/ws`);
   setInterval(() => {
@@ -14,11 +14,14 @@ if (typeof window !== "undefined") {
       return;
     }
 
-    ws.send(`{"event":"ping"}`);
+    ws.send('{"event":"ping"}');
   }, 29000);
 }
 
 export default function Home() {
+  const clientId = useRef()
+  const clientChip = useRef()
+
   const [state, setState] = useState<GameState>({
     board: [
       null, null, null,
@@ -39,11 +42,17 @@ export default function Home() {
         const event = JSON.parse(msg.data) as { event: string; detail: any };
 
         switch (event.event) {
-          case "gameStateR":
+          case 'gameStateR':
             setState(event.detail);
             break;
-          case "endStateR":
-            setEndState(event.detail)
+          case 'endStateR':
+            setEndState(event.detail);
+            break;
+          case 'connectionR':
+            const {id, chip, state} = event.detail;
+            clientId.current = id;
+            clientChip.current = chip;
+            setState(state)
         }
       } catch (e) {
         // do nothing
@@ -51,22 +60,29 @@ export default function Home() {
     };
 
     try {
-      ws.addEventListener("message", onMessage);
+      ws.addEventListener('message', onMessage);
     } catch (err) {
       // do nothing
     }
 
     return () => {
-      ws.removeEventListener("message", onMessage);
+      ws.removeEventListener('message', onMessage);
     };
   }, []);
 
   return (
     <Game
       gameState={state}
-      setGameState={(gameState: GameState) => ws.send(JSON.stringify({event: "gameStateS", "detail": gameState}))}
+      setGameState={(gameState: GameState) => {
+        if (state.turn !== clientChip.current) {
+          return;
+        }
+
+        ws.send(JSON.stringify({event: 'gameStateS', detail: gameState, id: clientId.current}))
+      }}
       endState={endState}
       setEndState={setEndState}
+      chip={clientChip.current}
     />
   );
 }

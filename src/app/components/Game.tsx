@@ -5,7 +5,7 @@ import { OChipTag } from '@/app/components/OChip';
 import { XChipTag } from '@/app/components/XChip';
 import roboto from '../../assets/roboto_font.json'
 
-export default function Game({gameState, setGameState, endState}: Props) {
+export default function Game({gameState, setGameState, endState, chip}: Props) {
   return (
     <main className="w-[100vw] h-[100vh]">
       <Canvas
@@ -13,6 +13,12 @@ export default function Game({gameState, setGameState, endState}: Props) {
           position: [0, 0, 10]
         }}
       >
+        {gameState.turn === chip && !endState.end && (
+          <Text3D font={roboto as unknown as string} position={[-3, 5, 0]}>
+            Your turn!
+            <meshBasicMaterial color={'white'}/>
+          </Text3D>
+        )}
         {endState.won && (
           <Text3D font={roboto as unknown as string} position={[0, 0, 2]}>
             {endState.won} WON!
@@ -63,4 +69,5 @@ type Props = {
   endState: EndState;
   setGameState: (state: GameState) => void;
   setEndState: (state: EndState) => void;
+  chip?: OChipTag | XChipTag,
 }

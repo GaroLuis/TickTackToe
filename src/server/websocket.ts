@@ -1,17 +1,12 @@
-import { RawData, WebSocketServer } from "ws";
-import { IncomingMessage } from "http";
-import internal from "stream";
+import { RawData, WebSocketServer } from 'ws';
+import { IncomingMessage } from 'http';
+import internal from 'stream';
 import { GameState } from '@/app/components/Game';
 
-let wss: WebSocketServer | null = null;
+type WebsocketWithId = WebSocket & { sessionId: string }
+const wss: WebSocketServer = new WebSocketServer({noServer: true});
 
-const getWss = () => {
-  if (null === wss) {
-    wss = new WebSocketServer({noServer: true})
-  }
-
-  return wss
-}
+const games: { [key: string]: { state: GameState; players: number } } = {}
 
 const checkEndState = (gameState: GameState) => {
   const {board, turn} = gameState;
@@ -41,8 +36,40 @@ const checkEndState = (gameState: GameState) => {
   }
 }
 
-getWss().on('connection', function (ws, request) {
-  console.log(getWss().clients.size)
+wss.on('connection', function (client) {
+  let id: string | null = null;
+  let chip = 'X';
+
+  for (const [key, value] of Object.entries(games)) {
+    if (value.players < 2) {
+      id = key;
+      chip = 'O';
+      games[key].players = 2;
+      break;
+    }
+  }
+
+  if (null == id) {
+    id = Math.random().toString();
+
+    games[id] = {
+      state: {
+        board: [
+          null, null, null,
+          null, null, null,
+          null, null, null,
+        ],
+        turn: 'X',
+      },
+      players: 1,
+    }
+  }
+
+  (client as unknown as WebsocketWithId).sessionId = id;
+  console.log(games)
+  setTimeout(() => {
+    client.send(JSON.stringify({event: 'connectionR', detail: {id: id, chip: chip, state: games[id!].state}}));
+  }, 1000);
 });
 
 export const startWebSocket = (
@@ -50,38 +77,48 @@ export const startWebSocket = (
   socket: internal.Duplex,
   head: Buffer
 ) => {
-  getWss().handleUpgrade(req, socket, head, (client) => {
-    getWss().emit('connection', client, req)
+  wss.handleUpgrade(req, socket, head, (client) => {
+    wss.emit('connection', client, req)
 
     client
-      .on("message", (data: RawData, b: boolean) => {
-        if (b) {
+      .on('message', (data: RawData, isBinary: boolean) => {
+        if (isBinary) {
           return;
         }
 
         try {
-          const message = JSON.parse(data.toString("utf8")) as {
+          const message = JSON.parse(data.toString('utf8')) as {
+            id: string;
             event: string;
             detail: any;
           };
 
           switch (message.event) {
-            case "ping":
-              client.send(`{"event":"pong"}`);
+            case 'ping':
+              client.send('{"event":"pong"}');
               break;
-            case "gameStateS":
+            case 'gameStateS':
+              games[message.id].state = message.detail;
               const ended = checkEndState(message.detail)
 
-              for (const wsClient of getWss().clients) {
-                if (ended) {
-                  wsClient.send(JSON.stringify({event: "endStateR", detail: ended}))
+              for (const wssClient of wss.clients) {
+                if ((wssClient as unknown as WebsocketWithId).sessionId !== message.id) {
+                  continue;
                 }
-                wsClient.send(JSON.stringify({event: "gameStateR", detail: message.detail}))
+
+                if (ended) {
+                  wssClient.send(JSON.stringify({event: 'endStateR', detail: ended}))
+                }
+                wssClient.send(JSON.stringify({event: 'gameStateR', detail: message.detail}))
               }
           }
         } catch (e) {
           console.error(e);
         }
-      });
+      })
+      .on('close', () => {
+        const sessionId = (client as unknown as WebsocketWithId).sessionId;
+        delete games[sessionId]
+      })
   });
 };

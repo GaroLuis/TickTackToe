@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Game, { GameState, EndState } from '../Game';
+import '@/i18n';
 
 describe('Game', () => {
   const defaultGameState: GameState = {

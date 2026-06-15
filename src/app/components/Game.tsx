@@ -4,8 +4,10 @@ import Board from '@/app/components/Board';
 import { OChipTag } from '@/app/components/OChip';
 import { XChipTag } from '@/app/components/XChip';
 import roboto from '../../assets/roboto_font.json'
+import { useTranslation } from 'react-i18next';
 
 export default function Game({gameState, setGameState, endState, chip}: Props) {
+  const { t } = useTranslation();
   return (
     <main className="w-[100vw] h-[100vh]">
       <Canvas
@@ -15,19 +17,19 @@ export default function Game({gameState, setGameState, endState, chip}: Props) {
       >
         {gameState.turn === chip && !endState.end && (
           <Text3D font={roboto as unknown as string} position={[-3, 5, 0]}>
-            Your turn!
+            {t('yourTurn')}
             <meshBasicMaterial color={'white'}/>
           </Text3D>
         )}
         {endState.won && (
           <Text3D font={roboto as unknown as string} position={[0, 0, 2]}>
-            {endState.won} WON!
+            {t('victory', { chip: endState.won })}
             <meshBasicMaterial color={'yellow'}/>
           </Text3D>
         )}
         {endState.end && !endState.won && (
           <Text3D font={roboto as unknown as string} position={[0, 0, 2]}>
-            DRAW!
+            {t('draw')}
             <meshBasicMaterial color={'orange'}/>
           </Text3D>
         )}
